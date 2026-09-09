@@ -155,3 +155,7 @@ Things that are easy to break and hard to debug:
 
 Working and in use, not yet published to a store. See [`PLAN.md`](./PLAN.md) for the
 build log and what remains.
+
+## License
+
+[MIT](./LICENSE)

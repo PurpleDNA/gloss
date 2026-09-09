@@ -2,6 +2,7 @@
   "name": "gloss",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Select text anywhere and ask an AI about it, in context, without leaving the page.",
   "type": "module",
   "scripts": {

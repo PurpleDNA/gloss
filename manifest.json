@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Gloss",
+  "version": "1.0.0",
+  "description": "Select text anywhere and ask an AI about it, in context, without leaving the page.",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "sidePanel",
+    "storage"
+  ],
+  "optional_host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://openrouter.ai/*",
+    "https://api.openai.com/*",
+    "http://localhost/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_page": "options.html",
+  "action": {
+    "default_title": "Gloss"
+  },
+  "commands": {
+    "gloss-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Ask Gloss about the selected text"
+    }
+  }
+}

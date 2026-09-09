@@ -1,0 +1,27 @@
+{
+  "name": "gloss",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Select text anywhere and ask an AI about it, in context, without leaving the page.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "dev": "vite build --watch --mode development",
+    "typecheck": "tsc --noEmit",
+    "icons": "node scripts/make-icons.mjs",
+    "deploy": "npm run build && node scripts/deploy-windows.mjs",
+    "package": "npm run build && node scripts/package.mjs",
+    "docs": "node scripts/build-docs.mjs"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.1",
+    "@types/chrome": "^0.0.287",
+    "@types/node": "^22.20.1",
+    "fake-indexeddb": "^6.2.5",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  },
+  "dependencies": {
+    "preact": "^10.25.3"
+  }
+}

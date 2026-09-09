@@ -313,14 +313,14 @@ export function App() {
           {!opened && pending?.error === "empty" && (
             <Notice
               title="Nothing selected"
-              body="Highlight some text on the page, then press Ctrl+Shift+K."
+              body="Highlight some text on the page, then right-click it and choose Ask Gloss."
             />
           )}
 
           {!pending && !opened && apiKey && (
             <Notice
               title="Highlight something"
-              body="Select text on any page and press Ctrl+Shift+K, or right-click the selection and choose Ask Gloss."
+              body="Select text on any page, right-click it, and choose Ask Gloss. You can also assign a keyboard shortcut in your browser's extension shortcuts page."
             />
           )}
 

@@ -37,11 +37,7 @@
   },
   "commands": {
     "gloss-selection": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+K",
-        "mac": "Command+Shift+K"
-      },
-      "description": "Ask Gloss about the selected text"
+      "description": "Ask Gloss about the selected text (unassigned by default)"
     }
   }
 }

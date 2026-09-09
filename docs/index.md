@@ -5,9 +5,9 @@ title: Gloss
 
 # Gloss
 
-Highlight a word or a passage on any page, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>,
-and a side panel opens with an explanation already arriving. Ask follow-ups. Close it.
-You never left the page.
+Highlight a word or a passage on any page, right-click, and choose **Ask Gloss**. A side
+panel opens with an explanation already arriving. Ask follow-ups. Close it. You never
+left the page.
 
 Gloss sends the paragraph around your selection, not just the selection — so a single
 unfamiliar word gets explained in the sense *that page* meant, not a dictionary entry

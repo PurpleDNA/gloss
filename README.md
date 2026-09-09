@@ -6,9 +6,9 @@
 
 ---
 
-Highlight a word or a passage on any page, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>,
-and a side panel opens with an explanation already arriving. Ask follow-ups. Close it.
-You never left the page.
+Highlight a word or a passage on any page, right-click, and choose **Ask Gloss**. A side
+panel opens with an explanation already arriving. Ask follow-ups. Close it. You never
+left the page.
 
 ## Why not just copy-paste into a chatbot
 
@@ -60,13 +60,14 @@ Then in Edge or Chrome:
 
 ## Use
 
-Highlight text on any page, then either press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>
-or right-click the selection and choose **Ask Gloss**.
+Highlight text on any page, right-click it, and choose **Ask Gloss**.
 
 - <kbd>Enter</kbd> sends a follow-up, <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a newline
 - The wave button transcribes speech instead of typing
 - Past conversations are searchable under **History** in the hamburger menu
-- Rebind the shortcut at `edge://extensions/shortcuts`
+- **Keyboard shortcut:** none is assigned by default, deliberately — every common
+  chord already means something in a browser. Assign your own at
+  `edge://extensions/shortcuts` (or `chrome://extensions/shortcuts`).
 
 ## Privacy
 

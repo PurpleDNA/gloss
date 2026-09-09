@@ -25,9 +25,13 @@ Highlight any text and get a plain-English explanation, in context, without leav
 ```
 Gloss explains what you're reading, where you're reading it.
 
-Highlight a word or a passage on any page, press Ctrl+Shift+K, and a side panel
-opens with an explanation already arriving. Ask follow-ups. Close it. You never
-left the page.
+Highlight a word or a passage on any page, right-click, and choose "Ask Gloss".
+A side panel opens with an explanation already arriving. Ask follow-ups. Close
+it. You never left the page.
+
+Prefer a keyboard shortcut? Assign one on your browser's extension shortcuts
+page. Gloss ships without a default binding so it can't collide with a shortcut
+you already use.
 
 WHY IT'S BETTER THAN COPY-PASTE
 

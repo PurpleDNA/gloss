@@ -1,10 +1,42 @@
 // Edge runs on the Windows side and loads unpacked extensions unreliably from
 // \\wsl.localhost UNC paths, so mirror dist/ onto the Windows filesystem.
 // Override the destination with GLOSS_WIN_DIR.
+import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
-const dest = process.env.GLOSS_WIN_DIR ?? "/mnt/c/Users/HP/Desktop/purple/gloss";
+/** C:\Users\Someone -> /mnt/c/Users/Someone */
+function windowsHome() {
+  try {
+    const profile = execFileSync("cmd.exe", ["/c", "echo %USERPROFILE%"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    const [, drive, rest] = profile.match(/^([A-Za-z]):\\(.*)$/) ?? [];
+    return drive ? `/mnt/${drive.toLowerCase()}/${rest.replace(/\\/g, "/")}` : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Optional gitignored override, so a personal path never enters the repo. */
+function localOverride() {
+  if (!existsSync(".env.local")) return undefined;
+  const line = readFileSync(".env.local", "utf8")
+    .split("\n")
+    .find((l) => l.startsWith("GLOSS_WIN_DIR="));
+  return line?.slice("GLOSS_WIN_DIR=".length).trim() || undefined;
+}
+
+const home = windowsHome();
+const dest =
+  process.env.GLOSS_WIN_DIR ?? localOverride() ?? (home ? join(home, "gloss-extension") : null);
+
+if (!dest) {
+  console.error("Could not locate a Windows home directory.");
+  console.error("Set GLOSS_WIN_DIR to where the built extension should be copied.");
+  process.exit(1);
+}
 
 if (!existsSync("dist")) {
   console.error("No dist/ — run `npm run build` first.");

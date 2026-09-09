@@ -1,72 +1,117 @@
 # Gloss
 
-Select text on any page, press a key, and get an explanation in a side panel —
-with the surrounding paragraph as context, so a single highlighted word is
-understood in the sense the page actually meant.
+**Highlight any text, get a plain-English explanation — in context, without leaving the page.**
 
-See [PLAN.md](./PLAN.md) for the full roadmap.
+[Privacy policy](https://purpledna.github.io/gloss/privacy) · [Website](https://purpledna.github.io/gloss/)
 
-## Status
+---
 
-Milestones **M0–M5**, **M7** and **M8** are built. Deep-link mode (M6) was
-deferred — the in-panel chat covers the need.
+Highlight a word or a passage on any page, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>,
+and a side panel opens with an explanation already arriving. Ask follow-ups. Close it.
+You never left the page.
 
-See [`store/LISTING.md`](./store/LISTING.md) for submission copy and the
-pre-submission checklist, and [`PRIVACY.md`](./PRIVACY.md) for the policy.
+## Why not just copy-paste into a chatbot
 
-**Providers:** Claude, Gemini, OpenRouter, OpenAI, and a local Ollama. Gemini and
-OpenRouter both have genuinely free tiers, so Gloss is usable without spending
-anything.
+Gloss sends the paragraph **around** your selection, not just the selection.
 
-## Install (unpacked)
+Highlight one unfamiliar word and the model receives the sentence it sat in, the page
+title, and the URL — so you get what the word means *there*, not a dictionary entry that
+might be about something else entirely. That difference is the whole point of the
+extension, and it costs about thirty lines of DOM traversal.
+
+Answers are deliberately short — three or four sentences, then you ask for more if you
+want it. An answer you finish reading beats a thorough one you abandon.
+
+## Bring your own AI
+
+You supply an API key. Requests go straight from your browser to that provider; there is
+no intermediary server.
+
+| Provider | Free option |
+|---|---|
+| **Claude** (Anthropic) | — |
+| **Gemini** (Google) | Free tier from [AI Studio](https://aistudio.google.com/apikey) |
+| **OpenRouter** | Models with ids ending `:free` |
+| **OpenAI** | — |
+| **Ollama** | Fully local, nothing leaves your machine |
+
+Gemini and OpenRouter both have genuinely free tiers, so Gloss is usable without spending
+anything. Note that free tiers generally allow the provider to review or train on
+submitted content — the trade-off is stated on each provider card in Settings.
+
+## Install
+
+Not yet published to a store. To run it from source:
 
 ```bash
+git clone https://github.com/PurpleDNA/gloss.git
+cd gloss
 npm install
 npm run build
 ```
 
-Then in Edge:
+Then in Edge or Chrome:
 
-1. Go to `edge://extensions`
-2. Turn on **Developer mode**
+1. Open `edge://extensions` (or `chrome://extensions`)
+2. Enable **Developer mode**
 3. **Load unpacked** → select the `dist/` folder
-4. Open the extension's **Settings**, pick a provider, paste its API key, click
-   **Save**, and approve the host permission prompt
-
-Host access is requested per provider, only when you enable one — so Gloss never
-holds permissions for services you don't use.
-
-**Free options:** a [Google AI Studio](https://aistudio.google.com/apikey) key has
-a free tier, and [OpenRouter](https://openrouter.ai/keys) model ids ending in
-`:free` cost nothing.
+4. Open the extension's **Settings**, pick a provider, paste its API key, click **Save**,
+   and approve the host permission prompt
 
 ## Use
 
-Highlight text on any page, then either:
+Highlight text on any page, then either press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>
+or right-click the selection and choose **Ask Gloss**.
 
-- press **Ctrl+Shift+K**, or
-- right-click the selection and choose **Ask Gloss**
+- <kbd>Enter</kbd> sends a follow-up, <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a newline
+- The wave button transcribes speech instead of typing
+- Past conversations are searchable under **History** in the hamburger menu
+- Rebind the shortcut at `edge://extensions/shortcuts`
 
-The panel opens and answers immediately. Ask follow-ups in the composer;
-Enter sends, Shift+Enter adds a newline.
+## Privacy
 
-If the shortcut is already taken, rebind it at `edge://extensions/shortcuts`.
+No servers, no accounts, no analytics. Nothing reaches the developer, because there is
+nowhere for it to go.
 
-## Develop
+- **No content scripts.** Gloss reads a page only at the moment you invoke it, only on
+  that tab, using `activeTab`. It requests no site access at install.
+- **Host permissions are per-provider and optional**, requested when you enable a
+  provider — never at install, and never for providers you don't use.
+- **API keys live in `storage.local`** and are deliberately excluded from browser sync.
+- **History stays in IndexedDB** on your machine, with retention and purge controls.
+
+What *is* sent, to whom, and what it means for free tiers and voice input is spelled out
+in the [privacy policy](https://purpledna.github.io/gloss/privacy).
+
+## Development
 
 ```bash
 npm run dev        # vite build --watch
 npm run typecheck
-npm run deploy     # build, then mirror dist/ to the Windows side for Edge
-npm run icons      # regenerate icons and the 300x300 store logo
-npm run package    # build, then write store/gloss-<version>.zip for upload
+npm run build
+npm run icons      # regenerate icons and the store logo
+npm run docs       # regenerate the published privacy page from PRIVACY.md
+npm run package    # build, then write store/gloss-<version>.zip
 ```
 
-After a rebuild, hit reload on the extension card in `edge://extensions`.
-Changes to `background.js` always need that reload; panel changes usually just
-need the panel reopened.
+After a rebuild, hit reload on the extension card. Changes to `background.js` always need
+that; panel changes usually just need the panel reopened.
 
-## Layout
+<details>
+<summary>Developing under WSL</summary>
+
+Edge runs on the Windows side and loads unpacked extensions unreliably from
+`\\wsl.localhost` paths, so `npm run deploy` mirrors `dist/` onto the Windows filesystem.
+It detects your Windows home automatically; to send it somewhere else, either set
+`GLOSS_WIN_DIR` or create a gitignored `.env.local`:
+
+```
+GLOSS_WIN_DIR=/mnt/c/Users/you/somewhere/gloss
+```
+
+</details>
+
+## Architecture
 
 | Path | Role |
 |---|---|
@@ -74,25 +119,39 @@ need the panel reopened.
 | `src/providers/` | One file per wire format; `registry.ts` is the catalogue |
 | `src/sidepanel/` | The chat UI |
 | `src/options/` | Settings page |
-| `src/prompts/` | Default system prompt and action templates |
+| `src/prompts/` | Default system prompt and question template |
 | `src/store/` | Keys (local), settings (sync), history (IndexedDB) |
 
-## Notes for future me
+Built with Vite, Preact and TypeScript. No runtime dependencies beyond Preact — icons,
+Markdown rendering, PNG generation and zip packaging are all hand-rolled, because the
+stores forbid remote code and a dependency per glyph isn't worth it.
 
-- `chrome.sidePanel.open()` **must** be called before any `await` in a trigger
-  handler. One await ahead of it and Chrome rejects the call as a non-gesture.
-- `captureSelection()` is serialized into the page, so it must stay
-  self-contained — no imports, no closures, no module-scope references.
-- The capture is handed over via `chrome.storage.session`, not a message. The
-  panel needs ~100ms to boot, so a broadcast alone loses the race on a cold open.
-- API keys go in `storage.local`, never `storage.sync`.
-- Actions and the system prompt live under their own `storage.sync` keys, not
-  inside `gloss:settings` — sync caps each item at 8KB and long custom templates
-  would eventually breach it.
-- A template that mentions `{context}` suppresses the automatic context block,
-  so custom templates can place it themselves without sending it twice.
-- Two different `saveThread`s exist: `store/thread.ts` is the session copy used
-  for the panel-reopen check, `store/history.ts` is durable history. The panel
-  imports the latter as `recordThread`.
-- Model ids drift constantly. Every provider accepts a typed-in model id in
-  settings, so a stale list in `registry.ts` is an inconvenience, not a breakage.
+Five providers are covered by **two** adapters: `anthropic`, `gemini`, and
+`openai-compatible` — the last is a factory parameterized by base URL, which handles
+OpenAI, OpenRouter, Groq, DeepSeek, Together and a local Ollama. Adding a provider that
+speaks one of those formats is an entry in `registry.ts`, not a new file.
+
+## Implementation notes
+
+Things that are easy to break and hard to debug:
+
+- **`chrome.sidePanel.open()` must be called before any `await`** in a trigger handler.
+  Chrome ties it to the gesture's task; one await ahead of it and the call is rejected.
+- **`captureSelection()` is serialized into the page**, so it must stay self-contained —
+  no imports, no closures, no module-scope references. Worth re-checking the minified
+  `background.js` after any change to it, since breakage here is silent.
+- **The capture is handed over via `chrome.storage.session`, not a message.** The panel
+  needs ~100ms to boot, so a broadcast alone loses the race on a cold open.
+- **The pending capture outlives the panel**, so a reopen looks identical to a fresh
+  trigger. The saved thread is what distinguishes them — otherwise reopening re-asks
+  (and re-charges) for an answer you already have.
+- **API keys go in `storage.local`, never `storage.sync`.**
+- **A template mentioning `{context}` suppresses the automatic context block**, so custom
+  templates can place it themselves without sending it twice.
+- **Model ids drift constantly.** Every provider accepts a typed-in model id in Settings,
+  so a stale list in `registry.ts` is an inconvenience, not a breakage.
+
+## Status
+
+Working and in use, not yet published to a store. See [`PLAN.md`](./PLAN.md) for the
+build log and what remains.

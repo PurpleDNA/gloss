@@ -3,6 +3,7 @@
   "name": "Gloss",
   "version": "1.0.0",
   "description": "Select text anywhere and ask an AI about it, in context, without leaving the page.",
+  "homepage_url": "https://purpledna.github.io/gloss/",
   "minimum_chrome_version": "116",
   "icons": {
     "16": "icons/16.png",

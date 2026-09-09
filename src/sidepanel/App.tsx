@@ -35,6 +35,7 @@ export function App() {
   const abort = useRef<AbortController | null>(null);
   /** Trigger ids we have already answered, so a panel reopen is not a re-ask. */
   const handledFor = useRef<string | null>(null);
+  const settingsWindow = useRef<number | null>(null);
 
   const provider = settings ? getProvider(settings.providerId) : null;
 
@@ -108,11 +109,39 @@ export function App() {
     };
     chrome.storage.onChanged.addListener(onStorage);
 
+    const onWindowClosed = (id: number) => {
+      if (settingsWindow.current === id) settingsWindow.current = null;
+    };
+    chrome.windows.onRemoved.addListener(onWindowClosed);
+
     return () => {
       chrome.runtime.onMessage.removeListener(onMessage);
       chrome.storage.onChanged.removeListener(onStorage);
+      chrome.windows.onRemoved.removeListener(onWindowClosed);
     };
   }, []);
+
+  // Granting a permission fires no storage event, so without this the panel keeps
+  // showing "one permission left" after the user has already allowed it elsewhere.
+  useEffect(() => {
+    if (!provider) return;
+    const recheck = () => void hasHostPermission(provider.origin).then(setGranted);
+
+    // @types/chrome omits removeListener on these two events; the runtime has it.
+    type PermEvent = { addListener(cb: () => void): void; removeListener(cb: () => void): void };
+    const added = chrome.permissions.onAdded as unknown as PermEvent;
+    const removed = chrome.permissions.onRemoved as unknown as PermEvent;
+
+    added.addListener(recheck);
+    removed.addListener(recheck);
+    // Belt and braces: a grant made while the panel was hidden lands on focus.
+    window.addEventListener("focus", recheck);
+    return () => {
+      added.removeListener(recheck);
+      removed.removeListener(recheck);
+      window.removeEventListener("focus", recheck);
+    };
+  }, [provider?.id]);
 
   const switchProvider = async (providerId: string) => {
     const next = await saveSettings({ providerId });
@@ -229,7 +258,24 @@ export function App() {
     setError(null);
   };
 
-  const openOptions = () => chrome.runtime.openOptionsPage();
+  // A tab would hide the panel behind it with no way back. A popup floats
+  // alongside, so closing it returns you to the conversation.
+  const openOptions = () => {
+    const url = chrome.runtime.getURL("options.html");
+    if (settingsWindow.current !== null) {
+      chrome.windows.update(settingsWindow.current, { focused: true }).catch(() => {
+        settingsWindow.current = null;
+        openOptions();
+      });
+      return;
+    }
+    void chrome.windows
+      .create({ url, type: "popup", width: 760, height: 900 })
+      .then((w) => {
+        settingsWindow.current = w?.id ?? null;
+      })
+      .catch(() => chrome.runtime.openOptionsPage());
+  };
   const grant = async () => {
     if (provider) setGranted(await requestHostPermission(provider.origin));
   };

@@ -97,9 +97,14 @@ export function Options() {
   const saveKey = async () => {
     await setKey(provider.id, keyDraft);
     // Requesting here rides the click gesture, which the API requires.
-    if (keyDraft.trim() && !granted) setGranted(await requestHostPermission(provider.origin));
+    let ok = granted;
+    if (keyDraft.trim() && !granted) {
+      ok = await requestHostPermission(provider.origin);
+      setGranted(ok);
+    }
     setConfigured(await getConfiguredProviders());
-    flash(keyDraft.trim() ? "Key saved" : "Key removed");
+    if (!keyDraft.trim()) flash("Key removed");
+    else flash(ok ? "Ready — close this window and ask away" : "Key saved, but host access is still needed");
   };
 
   const model = modelFor(settings, provider.id);

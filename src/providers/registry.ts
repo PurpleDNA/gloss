@@ -51,13 +51,11 @@ export const PROVIDERS: ProviderDef[] = [
     origin: "https://generativelanguage.googleapis.com/*",
     keyUrl: "https://aistudio.google.com/apikey",
     keyHint: "AIza...",
-    defaultModel: "gemini-2.5-flash",
+    defaultModel: "gemini-3.6-flash",
     free: true,
     note: "Google AI Studio issues keys with a free tier — no card required. Google may review and train on free-tier content; their paid tier does not.",
     models: [
-      { id: "gemini-2.5-flash", label: "2.5 Flash — fast, free tier" },
-      { id: "gemini-2.5-pro", label: "2.5 Pro — most capable" },
-      { id: "gemini-2.0-flash", label: "2.0 Flash" },
+      { id: "gemini-3.6-flash", label: "3.6 Flash — fast, free tier" },
     ],
   },
   {

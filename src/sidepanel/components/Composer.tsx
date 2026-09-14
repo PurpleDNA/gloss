@@ -5,11 +5,15 @@ import { SendIcon, StopIcon, WaveIcon } from "./Icons";
 interface Props {
   disabled: boolean;
   streaming: boolean;
+  /** What the box invites: a follow-up, or the first thing said. */
+  placeholder: string;
+  /** Take the caret on open, so a paste lands in the box without a click. */
+  autoFocus?: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
 }
 
-export function Composer({ disabled, streaming, onSend, onStop }: Props) {
+export function Composer({ disabled, streaming, placeholder, autoFocus, onSend, onStop }: Props) {
   const [text, setText] = useState("");
   const [recording, setRecording] = useState(false);
   const [speechError, setSpeechError] = useState("");
@@ -30,6 +34,12 @@ export function Composer({ disabled, streaming, onSend, onStop }: Props) {
   useEffect(grow, [text]);
 
   useEffect(() => () => session.current?.stop(), []);
+
+  // Only worth stealing focus once the box is usable — an autofocus on a
+  // disabled textarea is dropped, and the key arrives a tick after the panel.
+  useEffect(() => {
+    if (autoFocus && !disabled) ref.current?.focus();
+  }, [autoFocus, disabled]);
 
   const send = () => {
     const value = text.trim();
@@ -89,7 +99,7 @@ export function Composer({ disabled, streaming, onSend, onStop }: Props) {
           value={text}
           disabled={disabled}
           placeholder={
-            disabled ? "Add a key in Settings" : recording ? "Listening…" : "Ask a follow-up"
+            disabled ? "Add a key in Settings" : recording ? "Listening…" : placeholder
           }
           onInput={(e) => {
             const value = (e.currentTarget as HTMLTextAreaElement).value;

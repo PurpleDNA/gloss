@@ -35,11 +35,15 @@ export function App() {
   const abort = useRef<AbortController | null>(null);
   /** Trigger ids we have already answered, so a panel reopen is not a re-ask. */
   const handledFor = useRef<string | null>(null);
+  /** Identity for a conversation typed into the composer with nothing selected. */
+  const typed = useRef<{ id: string; createdAt: number } | null>(null);
   const settingsWindow = useRef<number | null>(null);
 
   const provider = settings ? getProvider(settings.providerId) : null;
 
-  const activeId = opened?.id ?? pending?.id;
+  // A trigger that captured nothing owns no thread — whatever the user types
+  // next is a conversation of its own.
+  const activeId = opened?.id ?? (pending?.capture ? pending.id : undefined);
   const capture: Capture | null = opened
     ? {
         text: opened.selection,
@@ -67,16 +71,21 @@ export function App() {
 
       const stored = await chrome.storage.session.get(PENDING_KEY);
       const p = stored[PENDING_KEY] as PendingCapture | undefined;
-      if (!p) return;
-
-      // The pending capture outlives the panel, so on reopen it looks identical
-      // to a fresh trigger. The saved thread is what tells the two apart.
       const thread = await loadThread();
-      if (thread?.pendingId === p.id) {
+
+      if (thread && !thread.pendingId && !p?.capture) {
+        // A typed thread belongs to no trigger, so it survives a reopen from the
+        // toolbar. Only a trigger that actually captured something displaces it.
+        typed.current = { id: thread.id, createdAt: thread.createdAt };
+        setMessages(thread.messages);
+        if (p) handledFor.current = p.id;
+      } else if (p && thread?.pendingId === p.id) {
+        // The pending capture outlives the panel, so on reopen it looks identical
+        // to a fresh trigger. The saved thread is what tells the two apart.
         handledFor.current = p.id;
         setMessages(thread.messages);
       }
-      setPending(p);
+      if (p) setPending(p);
     })();
 
     const onMessage = (msg: unknown) => {
@@ -165,8 +174,16 @@ export function App() {
     async (content: string, base: ChatMessage[]) => {
       if (!settings || !apiKey || !provider) return;
 
-      const id = activeId;
+      // Typing with nothing selected starts a thread that has no trigger behind
+      // it, so mint its identity here — otherwise it could be neither restored
+      // on reopen nor kept in history.
+      if (!activeId && !typed.current) {
+        typed.current = { id: crypto.randomUUID(), createdAt: Date.now() };
+      }
+      const id = activeId ?? typed.current?.id;
       const meta = capture;
+      const createdAt =
+        opened?.createdAt ?? meta?.capturedAt ?? typed.current?.createdAt ?? Date.now();
       if (id) handledFor.current = id;
 
       const convo: ChatMessage[] = [...base, { role: "user", content }];
@@ -178,18 +195,25 @@ export function App() {
       // the question rather than silently firing it again. Only the live trigger
       // owns this slot — a reopened history thread must not overwrite it.
       const persist = (msgs: ChatMessage[]) => {
-        if (!opened && pending?.id) void saveThread({ pendingId: pending.id, messages: msgs });
+        if (opened || !id) return;
+        void saveThread({
+          id,
+          pendingId: pending?.capture ? pending.id : undefined,
+          createdAt,
+          messages: msgs,
+        });
       };
 
       const record = (msgs: ChatMessage[]) => {
-        if (!settings.historyEnabled || !id || !meta) return;
+        if (!settings.historyEnabled || !id) return;
         void recordThread({
           id,
-          createdAt: opened?.createdAt ?? meta.capturedAt,
+          createdAt,
           updatedAt: Date.now(),
-          selection: meta.text,
-          title: meta.title,
-          url: meta.url,
+          // With no selection to name the thread, its opening question does.
+          selection: meta?.text ?? msgs.find((m) => m.role === "user")?.content ?? "",
+          title: meta?.title ?? "",
+          url: meta?.url ?? "",
           providerId: provider.id,
           model: modelFor(settings, provider.id),
           messages: msgs,
@@ -233,7 +257,14 @@ export function App() {
   // of one we already answered does not — handledFor was restored from storage.
   useEffect(() => {
     if (!pending || handledFor.current === pending.id) return;
+    // A trigger that captured nothing must not throw away a typed conversation
+    // the user is in the middle of.
+    if (!pending.capture && typed.current) {
+      handledFor.current = pending.id;
+      return;
+    }
     abort.current?.abort();
+    typed.current = null;
     setOpened(null);
     setShowHistory(false);
     setMessages([]);
@@ -252,6 +283,7 @@ export function App() {
   const openFromHistory = (thread: HistoryThread) => {
     abort.current?.abort();
     handledFor.current = thread.id;
+    typed.current = null;
     setOpened(thread);
     setMessages(thread.messages);
     setShowHistory(false);
@@ -349,24 +381,24 @@ export function App() {
             />
           )}
 
-          {!opened && pending?.error === "restricted" && (
+          {!opened && !messages.length && pending?.error === "restricted" && (
             <Notice
               title="Can't read this page"
-              body="Browser pages, the add-ons store, and most PDF viewers block extensions from reading the selection. Try it on a normal web page."
+              body="Browser pages, the add-ons store, and most PDF viewers block extensions from reading the selection. Paste the text below instead, or try it on a normal web page."
             />
           )}
 
-          {!opened && pending?.error === "empty" && (
+          {!opened && !messages.length && pending?.error === "empty" && (
             <Notice
               title="Nothing selected"
-              body="Highlight some text on the page, then right-click it and choose Ask Gloss."
+              body="Highlight some text on the page, then right-click it and choose Ask Gloss — or just paste it below and ask."
             />
           )}
 
-          {!pending && !opened && apiKey && (
+          {!pending && !opened && !messages.length && apiKey && (
             <Notice
-              title="Highlight something"
-              body="Select text on any page, right-click it, and choose Ask Gloss. You can also assign a keyboard shortcut in your browser's extension shortcuts page."
+              title="Paste or ask anything"
+              body="Type a question below to start, or select text on any page, right-click it, and choose Ask Gloss. You can also assign a keyboard shortcut in your browser's extension shortcuts page."
             />
           )}
 
@@ -382,6 +414,8 @@ export function App() {
           <Composer
             disabled={!ready}
             streaming={streaming}
+            placeholder={messages.length ? "Ask a follow-up" : "Paste or ask anything"}
+            autoFocus={!messages.length}
             onSend={(text) => void run(text, messages.filter((m) => m.content))}
             onStop={() => abort.current?.abort()}
           />

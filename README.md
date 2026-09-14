@@ -62,6 +62,8 @@ Then in Edge or Chrome:
 
 Highlight text on any page, right-click it, and choose **Ask Gloss**.
 
+- No selection to hand it? Click the toolbar icon and type or paste straight into the
+  composer — the panel opens with the caret already there
 - <kbd>Enter</kbd> sends a follow-up, <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a newline
 - The wave button transcribes speech instead of typing
 - Past conversations are searchable under **History** in the hamburger menu

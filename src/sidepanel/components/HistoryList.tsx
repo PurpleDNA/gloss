@@ -16,6 +16,16 @@ function ago(ts: number): string {
   return days < 30 ? `${days}d ago` : new Date(ts).toLocaleDateString();
 }
 
+/** Where the thread came from, or nothing at all if it was simply typed. */
+function source(thread: HistoryThread): string {
+  if (thread.title) return thread.title;
+  try {
+    return new URL(thread.url).host;
+  } catch {
+    return "";
+  }
+}
+
 export function HistoryList({ onOpen, onClose }: Props) {
   const [threads, setThreads] = useState<HistoryThread[] | null>(null);
   const [query, setQuery] = useState("");
@@ -75,7 +85,7 @@ export function HistoryList({ onOpen, onClose }: Props) {
             <button class="history-item" onClick={() => onOpen(t)}>
               <span class="history-selection">{t.selection}</span>
               <span class="history-meta">
-                {t.title || new URL(t.url || "https://-").host} · {ago(t.updatedAt)}
+                {[source(t), ago(t.updatedAt)].filter(Boolean).join(" · ")}
               </span>
             </button>
             <button

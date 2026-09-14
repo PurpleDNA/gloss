@@ -9,14 +9,21 @@ import type { ChatMessage } from "../providers/types";
 const KEY = "gloss:thread";
 
 export interface StoredThread {
-  /** Ties the thread to the trigger that produced it. */
-  pendingId: string;
+  /** The thread's id: the trigger's, or a minted one when nothing was selected. */
+  id: string;
+  /** Ties the thread to the trigger that produced it; absent for typed threads. */
+  pendingId?: string;
+  createdAt: number;
   messages: ChatMessage[];
 }
 
 export async function loadThread(): Promise<StoredThread | null> {
   const got = await chrome.storage.session.get(KEY);
-  return (got[KEY] as StoredThread | undefined) ?? null;
+  const thread = got[KEY] as Partial<StoredThread> | undefined;
+  // Session storage can still hold a pre-`id` record from an older build; it
+  // dies with the browser anyway, so drop it rather than migrate it.
+  if (!thread?.id || !thread.messages) return null;
+  return thread as StoredThread;
 }
 
 export async function saveThread(thread: StoredThread): Promise<void> {

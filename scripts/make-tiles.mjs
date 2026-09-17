@@ -7,6 +7,7 @@
 // is unavailable the type falls back and the script says so rather than
 // quietly shipping the wrong face.
 import { chromium } from "@playwright/test";
+import sharp from "sharp";
 import { mkdirSync } from "node:fs";
 
 const OUT = "store/assets";
@@ -116,8 +117,12 @@ function mark(size, bare = false) {
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
-// Retina, then downsampled by the store: text stays crisp at listing size.
-const page = await browser.newPage({ viewport: { width: 1520, height: 1000 }, deviceScaleFactor: 2 });
+// Rendered at 2x and downsampled below: supersampling gives cleaner type than
+// rendering straight to the target size. The store rejects anything that is not
+// EXACTLY the stated pixel dimensions, and a 2x render is silently double — so
+// the check at the end reads the written file, not the element's CSS box.
+const SCALE = 2;
+const page = await browser.newPage({ viewport: { width: 1520, height: 1000 }, deviceScaleFactor: SCALE });
 await page.setContent(html, { waitUntil: "load" });
 await page.evaluate(() => document.fonts.ready);
 
@@ -129,11 +134,17 @@ for (const { id, width, height } of TILES) {
   const el = page.locator(`#${id}`);
   const box = await el.boundingBox();
   if (Math.round(box.width) !== width || Math.round(box.height) !== height) {
-    throw new Error(`#${id} rendered ${box.width}x${box.height}, expected ${width}x${height}`);
+    throw new Error(`#${id} laid out at ${box.width}x${box.height}, expected ${width}x${height}`);
   }
+
   const file = `${OUT}/promo-${width}x${height}.png`;
-  await el.screenshot({ path: file });
-  console.log(`${file}  ${width}x${height}`);
+  const shot = await el.screenshot();
+  await sharp(shot).resize(width, height, { kernel: "lanczos3" }).png({ compressionLevel: 9 }).toFile(file);
+
+  // What the store measures is the file, so that is what gets verified.
+  const { width: w, height: h } = await sharp(file).metadata();
+  if (w !== width || h !== height) throw new Error(`${file} is ${w}x${h}, expected ${width}x${height}`);
+  console.log(`${file}  ${w}x${h}`);
 }
 
 await browser.close();

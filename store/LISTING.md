@@ -188,6 +188,31 @@ https://purpledna.github.io/gloss/privacy
 
 ---
 
+## Search terms
+
+Up to 7 entries, 30 characters each, 21 words across all of them. Not shown to
+users. These come to 18 words, leaving three spare:
+
+```
+explain selected text
+define word in context
+AI reading assistant
+highlight to explain
+jargon explainer
+dictionary
+study tool
+```
+
+The first four are intent searches — what someone types when they want this
+exact thing but do not know it exists. The last three catch broader browsing.
+
+Deliberately absent: provider names (ChatGPT, Claude, Gemini). Gloss does
+support them, so it would not be a lie, but brand names in search metadata are
+a standard rejection trigger and the traffic is not worth a second review
+round trip.
+
+---
+
 ## Properties page
 
 | Field | Value |

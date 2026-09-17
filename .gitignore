@@ -3,3 +3,7 @@ dist/
 *.zip
 .DS_Store
 .env.local
+
+# Test output
+test-results/
+playwright-report/

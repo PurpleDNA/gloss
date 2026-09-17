@@ -1,4 +1,6 @@
+import type { VNode } from "preact";
 import { connectOpenRouter } from "../lib/oauth";
+import { OpenRouterIcon } from "../sidepanel/components/Icons";
 import { streamAnthropic } from "./anthropic";
 import { streamGemini } from "./gemini";
 import { openAICompatible } from "./openai-compatible";
@@ -22,6 +24,8 @@ export interface ProviderDef {
    * providers that offer one. Resolves with the key, already stored.
    */
   connect?: () => Promise<string>;
+  /** The provider's own mark, for the connect button. */
+  Mark?: (props: { size?: number }) => VNode;
   keyHint: string;
   models: ModelOption[];
   defaultModel: string;
@@ -76,6 +80,7 @@ export const PROVIDERS: ProviderDef[] = [
     origin: OPENROUTER_ORIGIN,
     keyUrl: "https://openrouter.ai/keys",
     connect: () => connectOpenRouter(OPENROUTER_ORIGIN),
+    Mark: OpenRouterIcon,
     keyHint: "sk-or-v1-...",
     defaultModel: "google/gemma-4-26b-a4b-it:free",
     free: true,

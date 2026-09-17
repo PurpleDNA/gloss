@@ -167,7 +167,12 @@ export function Options() {
 
         {provider.connect && (
           <>
-            <button class="primary" disabled={connecting} onClick={() => void connect()}>
+            <button
+              class="primary with-icon"
+              disabled={connecting}
+              onClick={() => void connect()}
+            >
+              {provider.Mark && <provider.Mark />}
               {connecting ? "Connecting…" : `Connect ${provider.label}`}
             </button>
             <p class="hint">

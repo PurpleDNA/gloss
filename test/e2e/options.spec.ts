@@ -154,3 +154,24 @@ test.describe("settings", () => {
     await expect(options.getByRole("heading", { name: "Claude key" })).toBeVisible();
   });
 });
+
+test.describe("the connect button", () => {
+  test("carries OpenRouter's own mark, like the panel's does", async ({ options }) => {
+    await options.getByRole("button", { name: /^OpenRouter/ }).click();
+    const button = options.getByRole("button", { name: "Connect OpenRouter" });
+    await expect(button.locator("svg")).toBeVisible();
+  });
+
+  test("runs its rule the full width of the section", async ({ options }) => {
+    // Capped narrow it reads as a truncated line rather than a divider.
+    await options.getByRole("button", { name: /^OpenRouter/ }).click();
+    const [rule, section] = await Promise.all([
+      options.locator(".or").evaluate((el) => el.getBoundingClientRect().width),
+      options.locator("input[type=password]").evaluate((el) => {
+        const row = el.closest(".row")!;
+        return row.getBoundingClientRect().width;
+      }),
+    ]);
+    expect(rule).toBeCloseTo(section, 0);
+  });
+});

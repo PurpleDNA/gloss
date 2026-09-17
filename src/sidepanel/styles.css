@@ -358,10 +358,11 @@ body {
   background: var(--border);
 }
 
-/* The settings column is wider than the panel, so the rule can breathe. */
+/* In the settings column the rule spans the section, like every other element
+   there — capped narrow it reads as truncated rather than deliberate. */
 .options-page .or {
-  max-width: 360px;
-  margin: 16px 0;
+  max-width: none;
+  margin: 18px 0;
 }
 
 .welcome .error {

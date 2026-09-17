@@ -44,8 +44,12 @@ BRING YOUR OWN AI
 Gloss works with Claude, Gemini, OpenAI, OpenRouter, or a local Ollama install.
 You supply an API key; requests go straight from your browser to that provider.
 
-Two of those are genuinely free: Google AI Studio issues Gemini keys with a free
-tier, and OpenRouter has models that cost nothing. You can use Gloss without
+OpenRouter connects in one click. Approve it once and a key is created on your
+own OpenRouter account — nothing to copy, no console to visit. It stays your
+key, and you can revoke it any time.
+
+Two providers are genuinely free: OpenRouter has models that cost nothing, and
+Google AI Studio issues Gemini keys with a free tier. You can use Gloss without
 spending anything.
 
 BUILT TO BE UNOBTRUSIVE
@@ -111,7 +115,7 @@ in step if either changes.
 | Does it transmit data to remote servers? | **Yes** — to the AI provider the user configures with their own key |
 | Is data sold or shared with third parties? | **No** |
 | Does it use remote code? | **No** — all code is bundled in the package |
-| Privacy policy URL | **[REQUIRED — see hosting note below]** |
+| Privacy policy URL | `https://purpledna.github.io/gloss/privacy` |
 
 **Justification for each permission** (the form asks; be literal):
 
@@ -121,6 +125,11 @@ in step if either changes.
 - `contextMenus` — adds the "Ask Gloss" right-click entry.
 - `sidePanel` — the extension's entire interface is a side panel.
 - `storage` — stores the user's settings, API keys, and local history.
+- `identity` — used for exactly one thing: the "Connect OpenRouter" button,
+  which opens OpenRouter's own approval page via `launchWebAuthFlow` and
+  receives back the API key OpenRouter mints for the user. It reads nothing
+  about the browser profile or any signed-in account; no `identity.email`, no
+  `getAuthToken`, no Microsoft or Google identity is touched.
 - Optional host permissions — network access to the AI provider APIs the user
   chooses to enable. Requested at the time of enabling, never at install.
 
@@ -147,13 +156,15 @@ Before submitting, replace the contact placeholder at the bottom of
 
 ## Pre-submission checklist
 
-- [ ] Replace `[ADD YOUR CONTACT EMAIL BEFORE SUBMITTING]` in `PRIVACY.md`
-- [ ] Host the privacy policy and note the URL
-- [ ] Capture the five screenshots
-- [ ] Decide the version number (`0.1.0` is fine; the store only requires that
-      each submission increments)
-- [ ] `npm run package` → upload `store/gloss-<version>.zip`
-- [ ] Test the packaged zip by loading it unpacked one final time
+- [x] Contact email in `PRIVACY.md` — filled in
+- [x] Privacy policy hosted — https://purpledna.github.io/gloss/privacy
+- [x] Version decided — `1.0.0` (each later submission must increment)
+- [x] `npm run test:all` green
+- [x] `npm run package` → `store/gloss-1.0.0.zip`
+- [ ] Refresh `03-providers.png` to show OpenRouter selected with the Connect
+      button — it is the headline of this release and the current shot predates it
+- [ ] Consider a sixth shot of the onboarding screen ("Understand anything")
+- [ ] Load the packaged zip unpacked one final time
 - [ ] Register a Microsoft Partner Center account if you have not
       (free for Edge Add-ons; no developer fee)
 
@@ -167,3 +178,8 @@ Review typically takes a few business days. The likely questions:
   account. Gloss never sees it; it is stored locally and never synced.
 - **BYOK justification.** There is no server, so there is nowhere else a key
   could live.
+- **Why `identity`?** Only for OpenRouter's PKCE sign-in, so the user does not
+  have to paste a key by hand. The flow is standard OAuth PKCE against
+  `openrouter.ai`; the extension receives an API key for the user's own account
+  and stores it locally. No identity provider is queried and no profile data is
+  read. Everything else in the extension works without it.

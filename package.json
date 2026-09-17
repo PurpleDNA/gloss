@@ -15,6 +15,7 @@
     "test:e2e:ui": "npm run build && playwright test --ui",
     "test:all": "npm run test && npm run test:e2e",
     "icons": "node scripts/make-icons.mjs",
+    "tiles": "node scripts/make-tiles.mjs",
     "deploy": "npm run build && node scripts/deploy-windows.mjs",
     "package": "npm run build && node scripts/package.mjs",
     "docs": "node scripts/build-docs.mjs",

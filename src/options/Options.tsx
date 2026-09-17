@@ -17,6 +17,9 @@ export function Options() {
   const [threadCount, setThreadCount] = useState(0);
   const [usage, setUsage] = useState("…");
   const [mic, setMic] = useState<string>("checking");
+  const [connecting, setConnecting] = useState(false);
+  /** Which provider the user has put into "Custom…" mode, before typing an id. */
+  const [customFor, setCustomFor] = useState<string | null>(null);
 
   const provider = settings ? getProvider(settings.providerId) : null;
 
@@ -94,6 +97,23 @@ export function Options() {
     await loadProvider(id);
   };
 
+  // Mints a key on the user's own account and grants host access in one pass,
+  // so the field below fills itself and there is nothing left to do.
+  const connect = async () => {
+    if (!provider.connect) return;
+    setConnecting(true);
+    try {
+      setKeyDraft(await provider.connect());
+      setConfigured(await getConfiguredProviders());
+      setGranted(await hasHostPermission(provider.origin));
+      flash("Connected — close this window and ask away");
+    } catch (e) {
+      flash(e instanceof Error ? e.message : String(e));
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   const saveKey = async () => {
     await setKey(provider.id, keyDraft);
     // Requesting here rides the click gesture, which the API requires.
@@ -108,7 +128,12 @@ export function Options() {
   };
 
   const model = modelFor(settings, provider.id);
-  const isCustomModel = !provider.models.some((m) => m.id === model);
+  const stored = settings.models[provider.id] ?? "";
+  // Picking "Custom…" stores a blank, and a blank falls back to the provider's
+  // default — so the mode has to be remembered here, or the choice undoes itself
+  // before the user can type anything.
+  const isCustomModel =
+    customFor === provider.id || (Boolean(stored) && !provider.models.some((m) => m.id === stored));
 
   return (
     <main class="options-page">
@@ -139,6 +164,20 @@ export function Options() {
       <section>
         <h2>{provider.label} key</h2>
         {provider.note && <p class="hint">{provider.note}</p>}
+
+        {provider.connect && (
+          <>
+            <button class="primary" disabled={connecting} onClick={() => void connect()}>
+              {connecting ? "Connecting…" : `Connect ${provider.label}`}
+            </button>
+            <p class="hint">
+              Opens {new URL(provider.keyUrl).host} in a tab. Approving mints a key on your account
+              and drops it in below — nothing to copy.
+            </p>
+            <div class="or">or paste a key</div>
+          </>
+        )}
+
         <p class="hint">
           Get one at{" "}
           <a href={provider.keyUrl} target="_blank" rel="noreferrer">
@@ -184,6 +223,7 @@ export function Options() {
           value={isCustomModel ? "__custom" : model}
           onChange={(e) => {
             const v = (e.currentTarget as HTMLSelectElement).value;
+            setCustomFor(v === "__custom" ? provider.id : null);
             void patch({
               models: { ...settings.models, [provider.id]: v === "__custom" ? "" : v },
             });
@@ -201,7 +241,7 @@ export function Options() {
           <div class="row" style="margin-top:8px">
             <input
               type="text"
-              value={settings.models[provider.id] ?? ""}
+              value={stored}
               placeholder={provider.defaultModel}
               spellcheck={false}
               onInput={(e) =>

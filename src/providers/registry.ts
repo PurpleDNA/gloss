@@ -1,3 +1,4 @@
+import { connectOpenRouter } from "../lib/oauth";
 import { streamAnthropic } from "./anthropic";
 import { streamGemini } from "./gemini";
 import { openAICompatible } from "./openai-compatible";
@@ -16,6 +17,11 @@ export interface ProviderDef {
   origin: string;
   /** Where the user goes to create a key. */
   keyUrl: string;
+  /**
+   * One-click sign-in that mints a key on the user's own account, for the
+   * providers that offer one. Resolves with the key, already stored.
+   */
+  connect?: () => Promise<string>;
   keyHint: string;
   models: ModelOption[];
   defaultModel: string;
@@ -29,6 +35,8 @@ export interface ProviderDef {
  * Every provider therefore also accepts a typed-in model id in settings, so a
  * stale list here is an inconvenience rather than a breakage.
  */
+const OPENROUTER_ORIGIN = "https://openrouter.ai/*";
+
 export const PROVIDERS: ProviderDef[] = [
   {
     id: "anthropic",
@@ -65,17 +73,19 @@ export const PROVIDERS: ProviderDef[] = [
       "HTTP-Referer": "https://github.com/gloss-extension",
       "X-Title": "Gloss",
     }),
-    origin: "https://openrouter.ai/*",
+    origin: OPENROUTER_ORIGIN,
     keyUrl: "https://openrouter.ai/keys",
+    connect: () => connectOpenRouter(OPENROUTER_ORIGIN),
     keyHint: "sk-or-v1-...",
-    defaultModel: "deepseek/deepseek-chat-v3.1:free",
+    defaultModel: "google/gemma-4-26b-a4b-it:free",
     free: true,
     note: "Model ids ending in :free cost nothing. One key reaches dozens of models. Some free models are free because the host logs and trains on prompts.",
     models: [
-      { id: "deepseek/deepseek-chat-v3.1:free", label: "DeepSeek V3.1 (free)" },
-      { id: "meta-llama/llama-3.3-70b-instruct:free", label: "Llama 3.3 70B (free)" },
-      { id: "google/gemma-3-27b-it:free", label: "Gemma 3 27B (free)" },
-      { id: "anthropic/claude-sonnet-4.5", label: "Claude Sonnet 4.5 (paid)" },
+      { id: "google/gemma-4-26b-a4b-it:free", label: "Gemma 4 26B — fast (free)" },
+      { id: "google/gemma-4-31b-it:free", label: "Gemma 4 31B (free)" },
+      { id: "nvidia/nemotron-3.5-lightning:free", label: "Nemotron 3.5 Lightning (free)" },
+      { id: "z-ai/glm-5.2:free", label: "GLM 5.2 (free)" },
+      { id: "anthropic/claude-sonnet-5", label: "Claude Sonnet 5 (paid)" },
     ],
   },
   {

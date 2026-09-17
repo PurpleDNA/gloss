@@ -8,13 +8,36 @@ const stroke = {
   "stroke-linejoin": "round" as const,
 };
 
-export function Logo() {
+/** `animated` sets the three lines breathing — see .logo[data-animate] in the CSS. */
+export function Logo({ size = 20, animated = false }: { size?: number; animated?: boolean }) {
   return (
-    <svg class="logo" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <svg
+      class="logo"
+      data-animate={animated || undefined}
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-hidden="true"
+    >
       <rect x="1" y="1" width="22" height="22" rx="6" fill="var(--accent)" />
-      <rect x="5.5" y="7" width="10" height="2" rx="1" fill="#fff" opacity="0.55" />
-      <rect x="5.5" y="11" width="13" height="2.5" rx="1.25" fill="var(--highlight)" />
-      <rect x="5.5" y="16" width="7.5" height="2" rx="1" fill="#fff" opacity="0.55" />
+      <rect class="logo-line line-1" x="5.5" y="7" width="10" height="2" rx="1" fill="#fff" opacity="0.55" />
+      <rect class="logo-line line-2" x="5.5" y="11" width="13" height="2.5" rx="1.25" fill="var(--highlight)" />
+      <rect class="logo-line line-3" x="5.5" y="16" width="7.5" height="2" rx="1" fill="#fff" opacity="0.55" />
+    </svg>
+  );
+}
+
+/** OpenRouter's own mark, so the connect button looks like a sign-in button. */
+export function OpenRouterIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="19.82 17.199 365.556 258.298"
+      width={Math.round(size * 1.415)}
+      height={size}
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M303.9475,17.19926c42.79734,0,77.48933,34.69327,77.48933,77.48933s-34.69199,77.48933-77.48933,77.48933l76.86166,76.86244c9.76367,9.76313,2.84903,26.45667-10.95697,26.45667h-220.88335c-71.32686,0-129.14889-57.82202-129.14889-129.14889S77.64197,17.19926,148.96884,17.19926h154.97866ZM148.96884,68.85881c-42.79607,0-77.48933,34.69327-77.48933,77.48933s34.69327,77.48933,77.48933,77.48933,77.48933-34.69327,77.48933-77.48933-34.69327-77.48933-77.48933-77.48933Z" />
     </svg>
   );
 }

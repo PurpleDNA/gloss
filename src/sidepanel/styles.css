@@ -228,6 +228,157 @@ body {
   color: var(--muted);
 }
 
+/* ---------- welcome ---------- */
+
+.welcome {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 14px 40px;
+  overflow-y: auto;
+}
+
+.welcome .logo {
+  margin-bottom: 16px;
+}
+
+/* ---------- the logo, breathing ---------- */
+
+/*
+ * A 1.5s flourish, then three seconds of stillness, forever: the motion is a
+ * greeting, not a spinner, and a loop with no rest in it turns into wallpaper.
+ * Both phases live in one 4.5s animation — the movement is packed into the
+ * first third and every track holds its resting width through the rest.
+ *
+ * The three lines run deliberately mismatched keyframes so they never line up,
+ * which reads as three lines of text being skimmed rather than a bar chart.
+ * SVG geometry is animatable as CSS, so this needs no JS and no second copy of
+ * the mark.
+ */
+.logo[data-animate] .logo-line {
+  animation: gloss-line-1 4.5s ease-in-out infinite;
+  will-change: width;
+}
+
+.logo[data-animate] .line-2 {
+  animation-name: gloss-line-2;
+}
+
+.logo[data-animate] .line-3 {
+  animation-name: gloss-line-3;
+}
+
+@keyframes gloss-line-1 {
+  0% { width: 10px; }
+  7.33% { width: 15.5px; }
+  16% { width: 6.5px; }
+  23.67% { width: 12.5px; }
+  33.33% { width: 10px; }
+  100% { width: 10px; }
+}
+
+@keyframes gloss-line-2 {
+  0% { width: 13px; }
+  10.33% { width: 7.5px; }
+  19.67% { width: 16px; }
+  28% { width: 10.5px; }
+  33.33% { width: 13px; }
+  100% { width: 13px; }
+}
+
+@keyframes gloss-line-3 {
+  0% { width: 7.5px; }
+  5.67% { width: 12px; }
+  14.67% { width: 5px; }
+  26% { width: 9.5px; }
+  33.33% { width: 7.5px; }
+  100% { width: 7.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo[data-animate] .logo-line {
+    animation: none;
+  }
+}
+
+.hero {
+  margin: 0;
+  /* The panel can be dragged narrow; the headline shrinks rather than clips. */
+  font-size: clamp(20px, 7.5vw, 27px);
+  line-height: 1.12;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+}
+
+/* The second word carries the accent — the highlight the extension is named for. */
+.hero span {
+  color: var(--accent);
+}
+
+.welcome-sub {
+  margin: 10px 0 24px;
+  max-width: 32ch;
+  color: var(--muted);
+}
+
+.wide {
+  width: 100%;
+  max-width: 260px;
+}
+
+/* A brand mark sitting beside the label, the way a sign-in button reads. */
+.with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+/* A hairline with the word sitting in the gap. */
+.or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 260px;
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.or::before,
+.or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* The settings column is wider than the panel, so the rule can breathe. */
+.options-page .or {
+  max-width: 360px;
+  margin: 16px 0;
+}
+
+.welcome .error {
+  margin-top: 18px;
+  max-width: 280px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.welcome-note {
+  margin: 14px 0 0;
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 /* ---------- thread ---------- */
 
 .thread {

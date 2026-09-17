@@ -27,6 +27,10 @@ want it. An answer you finish reading beats a thorough one you abandon.
 You supply an API key. Requests go straight from your browser to that provider; there is
 no intermediary server.
 
+OpenRouter can be connected in one click: Gloss opens OpenRouter's approval page, and the
+key it mints lands in local storage without you copying anything. It is still your key on
+your account, revocable at any time. Every other provider takes a pasted key.
+
 | Provider | Free option |
 |---|---|
 | **Claude** (Anthropic) | — |
@@ -55,8 +59,9 @@ Then in Edge or Chrome:
 1. Open `edge://extensions` (or `chrome://extensions`)
 2. Enable **Developer mode**
 3. **Load unpacked** → select the `dist/` folder
-4. Open the extension's **Settings**, pick a provider, paste its API key, click **Save**,
-   and approve the host permission prompt
+4. Open the panel and either **Connect OpenRouter** — one approval, no key to copy — or
+   **Set API key** to paste one for any provider in Settings, then approve the host
+   permission prompt
 
 ## Use
 
@@ -92,6 +97,9 @@ in the [privacy policy](https://purpledna.github.io/gloss/privacy).
 npm run dev        # vite build --watch
 npm run typecheck
 npm run build
+npm run test       # unit tests (vitest)
+npm run test:e2e   # builds, then drives the real extension (playwright)
+npm run test:all   # both
 npm run icons      # regenerate icons and the store logo
 npm run docs       # regenerate the published privacy page from PRIVACY.md
 npm run package    # build, then write store/gloss-<version>.zip
@@ -114,6 +122,30 @@ GLOSS_WIN_DIR=/mnt/c/Users/you/somewhere/gloss
 
 </details>
 
+## Tests
+
+Two layers, and the split is deliberate.
+
+**Unit** (`test/unit`, vitest + jsdom) covers the pure logic: the SSE parser, the markdown
+renderer's escaping, prompt assembly, every storage module against a fake `chrome`, all
+three provider adapters against a mocked `fetch`, the OAuth flow — including recomputing
+the PKCE challenge to prove the verifier matches — and the background worker's trigger
+paths. `test/unit/registry.test.ts` also holds the registry and `manifest.json` against
+each other, so a provider can never declare an origin the manifest cannot request.
+
+**End to end** (`test/e2e`, Playwright) loads the real built extension into a real
+Chromium and drives the actual side panel and settings pages. It needs a display; under
+WSL that is WSLg, which works out of the box. Two browser dialogs are stubbed, because
+nothing can click them: the host-permission prompt and the OAuth window. Everything else
+is genuine — including `captureSelection`, which runs against real pages with a real
+`Selection` and real `innerText`, serialized into the page exactly as
+`chrome.scripting.executeScript` does it.
+
+Streaming behaviour (stopping mid-answer, the thinking state, a dropped connection) is
+driven through the registry's local-Ollama provider against a small real server on port
+11434, since `route.fulfill()` sends a complete body and cannot model a stream that is
+still open.
+
 ## Architecture
 
 | Path | Role |
@@ -124,6 +156,8 @@ GLOSS_WIN_DIR=/mnt/c/Users/you/somewhere/gloss
 | `src/options/` | Settings page |
 | `src/prompts/` | Default system prompt and question template |
 | `src/store/` | Keys (local), settings (sync), history (IndexedDB) |
+| `test/unit/` | vitest, jsdom, a fake `chrome` |
+| `test/e2e/` | Playwright, driving the real built extension |
 
 Built with Vite, Preact and TypeScript. No runtime dependencies beyond Preact — icons,
 Markdown rendering, PNG generation and zip packaging are all hand-rolled, because the

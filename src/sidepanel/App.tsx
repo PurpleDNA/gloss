@@ -14,6 +14,7 @@ import { Thread } from "./components/Thread";
 import { Composer } from "./components/Composer";
 import { HistoryList } from "./components/HistoryList";
 import { Menu } from "./components/Menu";
+import { Welcome } from "./components/Welcome";
 import { Logo, MenuIcon } from "./components/Icons";
 
 export function App() {
@@ -29,6 +30,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [template, setTemplate] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
 
@@ -308,6 +311,23 @@ export function App() {
       })
       .catch(() => chrome.runtime.openOptionsPage());
   };
+  // Signing in mints a key and grants the host permission in one go, so the
+  // panel goes from empty to ready — and answers a waiting selection — on its own.
+  const connect = async () => {
+    const openrouter = getProvider("openrouter");
+    if (!openrouter.connect) return;
+    setConnecting(true);
+    setConnectError(null);
+    try {
+      await openrouter.connect();
+      await switchProvider(openrouter.id);
+    } catch (e) {
+      setConnectError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   const grant = async () => {
     if (provider) setGranted(await requestHostPermission(provider.origin));
   };
@@ -357,21 +377,15 @@ export function App() {
 
       {showHistory ? (
         <HistoryList onOpen={openFromHistory} onClose={() => setShowHistory(false)} />
+      ) : apiKey === "" ? (
+        <Welcome
+          connecting={connecting}
+          error={connectError}
+          onKey={openOptions}
+          onConnect={() => void connect()}
+        />
       ) : (
         <>
-          {apiKey === "" && provider && (
-            <Notice
-              title={`Add a ${provider.label} key to get started`}
-              body={
-                provider.free
-                  ? `${provider.label} has a free tier. Your key is stored locally and sent only to ${provider.label}.`
-                  : `Gloss talks to ${provider.label} directly from your browser. Your key is stored locally and never sent anywhere else.`
-              }
-              action="Open settings"
-              onAction={openOptions}
-            />
-          )}
-
           {apiKey && granted === false && provider && (
             <Notice
               title="One permission left"

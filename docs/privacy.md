@@ -97,6 +97,7 @@ every page you have asked about.
 | `contextMenus`               | Adds the "Ask Gloss" right-click item.                                                                                                                                                                               |
 | `sidePanel`                  | Opens the panel.                                                                                                                                                                                                     |
 | `storage`                    | Saves your settings, keys, and history locally.                                                                                                                                                                      |
+| `identity`                   | Used for one thing: the "Connect OpenRouter" sign-in, which opens OpenRouter's own approval page in a tab and receives the key it mints back. It reads nothing about your browser profile or your signed-in accounts. |
 | Host access to provider APIs | Requested **only** when you enable a provider, and only for that provider's API endpoint. This permits network requests to that API. It grants no access to your browsing — an API endpoint is not a site you visit. |
 
 Gloss registers **no content scripts** and requests **no site access at install

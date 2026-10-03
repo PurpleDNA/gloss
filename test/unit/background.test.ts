@@ -65,6 +65,54 @@ describe("background worker", () => {
     });
   });
 
+  describe("inside a PDF viewer", () => {
+    // The viewer reports its own embedded contents rather than the tab around it.
+    const clickInPdf = (tab: unknown) =>
+      chrome.contextMenus.onClicked.emit(
+        { menuItemId: "gloss-selection", selectionText: "entropy", pageUrl: "https://pdf.example/x.pdf" },
+        tab,
+      );
+
+    beforeEach(() => {
+      chrome.scripting.executeScript.mockRejectedValue(new Error("Cannot access contents"));
+      chrome.tabs.query.mockResolvedValue([{ id: TAB, url: "https://pdf.example/x.pdf", title: "A PDF" }]);
+    });
+
+    it.each([
+      ["a tab with no id", { id: -1, windowId: -1 }],
+      ["no tab at all", undefined],
+    ])("opens the panel for the current window given %s", (_, tab) => {
+      clickInPdf(tab);
+      expect(chrome.sidePanel.open).toHaveBeenCalledWith({ windowId: chrome.windows.WINDOW_ID_CURRENT });
+    });
+
+    it("opens the panel for the window it was given when there is one", () => {
+      clickInPdf({ id: -1, windowId: 3 });
+      expect(chrome.sidePanel.open).toHaveBeenCalledWith({ windowId: 3 });
+    });
+
+    it("still captures the selection, from the active tab", async () => {
+      clickInPdf({ id: -1, windowId: -1 });
+      const p = await pending();
+      expect(chrome.tabs.query).toHaveBeenCalledWith({ active: true, lastFocusedWindow: true });
+      expect(p.tabId).toBe(TAB);
+      expect(p.capture).toMatchObject({ text: "entropy", url: "https://pdf.example/x.pdf", title: "A PDF" });
+    });
+
+    it("falls back to the menu's page URL when no active tab is found", async () => {
+      chrome.tabs.query.mockResolvedValue([]);
+      clickInPdf(undefined);
+      expect((await pending()).capture).toMatchObject({ text: "entropy", url: "https://pdf.example/x.pdf" });
+    });
+
+    it("stores the capture even when the panel refuses to open", async () => {
+      // The toolbar icon then picks it up instead of reopening the last chat.
+      chrome.sidePanel.open.mockRejectedValue(new Error("No window with id: -2"));
+      clickInPdf(undefined);
+      expect((await pending()).capture?.text).toBe("entropy");
+    });
+  });
+
   describe("capturing", () => {
     it("stores the capture, then broadcasts it", async () => {
       // Storage first: a cold panel needs ~100ms to boot and would miss the message.

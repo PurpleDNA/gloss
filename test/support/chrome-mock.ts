@@ -117,7 +117,11 @@ export function makeChrome() {
       onMessage: event<(msg: unknown) => void>(),
       onInstalled: event<() => void>(),
     },
-    tabs: { get: vi.fn(async (_id: number) => ({ url: "", title: "" })) },
+    tabs: {
+      TAB_ID_NONE: -1,
+      get: vi.fn(async (_id: number) => ({ url: "", title: "" })),
+      query: vi.fn(async (_info: unknown) => [] as { id?: number; url?: string; title?: string }[]),
+    },
     scripting: { executeScript: vi.fn(async () => [] as { result: unknown }[]) },
     contextMenus: {
       create: vi.fn(),
@@ -129,7 +133,11 @@ export function makeChrome() {
       open: vi.fn(async () => undefined),
       setPanelBehavior: vi.fn(async () => undefined),
     },
-    windows: { create: vi.fn(async () => ({ id: 1 })), update: vi.fn(async () => undefined), onRemoved: event<(id: number) => void>() },
+    windows: {
+      WINDOW_ID_CURRENT: -2,
+      create: vi.fn(async () => ({ id: 1 })), update: vi.fn(async () => undefined),
+      onRemoved: event<(id: number) => void>(),
+    },
   };
 }
 

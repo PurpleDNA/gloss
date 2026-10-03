@@ -332,6 +332,18 @@ export function App() {
     if (provider) setGranted(await requestHostPermission(provider.origin));
   };
 
+  // The last question can be asked again when it failed, or when it never got
+  // an answer at all — which is also what a provider switch leaves behind, since
+  // that clears the old provider's error. A stopped partial answer is a choice.
+  const lastAsk = messages.findLastIndex((m) => m.role === "user");
+  const unanswered = lastAsk >= 0 && !messages.slice(lastAsk + 1).some((m) => m.content);
+  const canRetry = !streaming && lastAsk >= 0 && Boolean(error || unanswered);
+  const retry = () =>
+    void run(
+      messages[lastAsk].content,
+      messages.slice(0, lastAsk).filter((m) => m.content),
+    );
+
   const ready = Boolean(apiKey && granted);
   const switchable = PROVIDERS.filter((p) => configured.has(p.id) || p.id === settings?.providerId);
 
@@ -424,6 +436,12 @@ export function App() {
           />
 
           {error && <div class="error">{error}</div>}
+
+          {canRetry && (
+            <button class="ghost retry" disabled={!ready} onClick={retry}>
+              Retry
+            </button>
+          )}
 
           <Composer
             disabled={!ready}

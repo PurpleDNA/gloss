@@ -135,6 +135,38 @@ test.describe("asking a question", () => {
     await expect(panel.locator(".msg.user")).toHaveText("bad model");
   });
 
+  test("asks the failed question again on retry", async ({ panel, context }) => {
+    let calls = 0;
+    await context.route(CHAT, (route) =>
+      ++calls === 1
+        ? route.fulfill({ status: 502, json: { error: { message: "Provider returned error" } } })
+        : route.fulfill({
+            headers: { "content-type": "text/event-stream" },
+            body: sseBody(["second time lucky"]),
+          }),
+    );
+
+    await ask(panel, "flaky one");
+    await expect(panel.locator(".error")).toHaveText("Provider returned error");
+
+    await panel.getByRole("button", { name: "Retry" }).click();
+    await expect(panel.locator(".msg.assistant")).toHaveText("second time lucky");
+    // The same turn again, not a second copy of the question.
+    await expect(panel.locator(".msg.user")).toHaveText(["flaky one"]);
+    await expect(panel.locator(".error")).toHaveCount(0);
+    await expect(panel.getByRole("button", { name: "Retry" })).toHaveCount(0);
+  });
+
+  test("offers no retry once the question is answered", async ({ panel, context }) => {
+    await context.route(CHAT, (route) =>
+      route.fulfill({ headers: { "content-type": "text/event-stream" }, body: sseBody(["fine"]) }),
+    );
+
+    await ask(panel, "easy one");
+    await expect(panel.locator(".msg.assistant")).toHaveText("fine");
+    await expect(panel.getByRole("button", { name: "Retry" })).toHaveCount(0);
+  });
+
   test("restores the thread when the panel is closed and reopened", async ({ panel, context }) => {
     await context.route(CHAT, (route) =>
       route.fulfill({

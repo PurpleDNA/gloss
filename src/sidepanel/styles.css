@@ -487,6 +487,11 @@ body {
   overflow-wrap: anywhere;
 }
 
+.retry {
+  flex: none;
+  align-self: flex-start;
+}
+
 /* ---------- composer ---------- */
 
 .composer {
